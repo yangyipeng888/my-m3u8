@@ -1,13 +1,15 @@
 // ==UserScript==
 // @name         m3u8-downloader
 // @namespace    https://github.com/Momo707577045/m3u8-downloader
-// @version      0.5.0
+// @version      0.8.0
 // @description  https://github.com/Momo707577045/m3u8-downloader 配套插件
 // @author       Momo707577045
 // @include      *
 // @exclude      http://blog.luckly-mjw.cn/tool-show/m3u8-downloader/index.html
 // @exclude      https://blog.luckly-mjw.cn/tool-show/m3u8-downloader/index.html
 // @exclude      https://www.bilibili.com/*
+// @downloadURL	 https://blog.luckly-mjw.cn/tool-show/m3u8-downloader/m3u8-downloader.user.js
+// @updateURL	   https://blog.luckly-mjw.cn/tool-show/m3u8-downloader/m3u8-downloader.user.js
 // @grant        none
 // @run-at document-start
 // ==/UserScript==
@@ -49,7 +51,7 @@
           m3u8Target = url
           console.log('【m3u8】----------------------------------------')
           console.log(url)
-          console.log('http://blog.luckly-mjw.cn/tool-show/m3u8-downloader/index.html?source=' + url)
+          console.log('http://blog.luckly-mjw.cn/tool-show/m3u8-downloader/index.html?source=' + url + '&title=' + getTitle())
         }
       }
     })
@@ -65,11 +67,27 @@
     window.XMLHttpRequest = function() {
       var realXHR = new originXHR()
       realXHR.open = function(method, url) {
-        url.indexOf('.m3u8') > 0 && checkM3u8Url(url)
+        url.toString() && url.toString().indexOf('.m3u8') > 0 && checkM3u8Url(url.toString())
         originOpen.call(realXHR, method, url)
       }
       return realXHR
     }
+    XMLHttpRequest.UNSENT = 0;
+    XMLHttpRequest.OPENED = 1;
+    XMLHttpRequest.HEADERS_RECEIVED = 2;
+    XMLHttpRequest.LOADING = 3;
+    XMLHttpRequest.DONE = 4;
+  }
+
+  // 获取顶部 window title，因可能存在跨域问题，故使用 try catch 进行保护
+  function getTitle(){
+    let title = document.title;
+    try {
+      title = window.top.document.title
+    } catch (error) {
+      console.log(error)
+    }
+    return title
   }
 
   function appendDom() {
@@ -132,7 +150,8 @@
     })
 
     m3u8Jump.addEventListener('click', function() {
-      window.open('//blog.luckly-mjw.cn/tool-show/m3u8-downloader/index.html?source=' + m3u8Target)
+
+      window.open('//blog.luckly-mjw.cn/tool-show/m3u8-downloader/index.html?source=' + m3u8Target + '&title=' + getTitle())
     })
 
     m3u8Append.addEventListener('click', function() {
@@ -166,6 +185,7 @@
           $section.style.left = '0'
           $section.style.position = 'absolute'
           $section.style.zIndex = '9999'
+          $section.style.fontSize = '14px'
           $section.style.overflowY = 'auto'
           $section.style.backgroundColor = 'white'
           document.body.appendChild($section);
@@ -182,11 +202,16 @@
           let $vue = document.createElement('script')
           $vue.src = 'https://upyun.luckly-mjw.cn/lib/vue.js'
 
+          // 加载 stream 流式下载器
+          let $streamSaver = document.createElement('script')
+          $streamSaver.src = 'https://upyun.luckly-mjw.cn/lib/stream-saver.js'
+
           // 监听 vue 加载完成，执行业务代码
           $vue.addEventListener('load', function() {eval(script)})
-          document.body.appendChild($vue);
+          document.body.appendChild($streamSaver);
           document.body.appendChild($mp4);
           document.body.appendChild($ase);
+          document.body.appendChild($vue);
           alert('注入成功，请滚动到页面底部')
         },
       })
